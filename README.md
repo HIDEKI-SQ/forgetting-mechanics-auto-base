@@ -1,3 +1,5 @@
+![Auto Measure](https://github.com/<user>/forgetting-mechanics-auto-base/actions/workflows/auto.yml/badge.svg)
+
 # Forgetting Mechanics — Auto Base (toy ↔ bench)
 
 Template to run the C‑series pipeline from GitHub Actions with a one‑button
