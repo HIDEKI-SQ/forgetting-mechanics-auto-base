@@ -46,7 +46,34 @@ def run_bench():
     json.dump({"meta":{"mode":"bench"}, "results":[]}, open(out_path,"w",encoding="utf-8"), indent=2, ensure_ascii=False)
     print("Saved:", out_path)
 
-if MODE=="toy":
+if MODE == "toy":
     run_toy()
-else:
+elif MODE == "bench":
     run_bench()
+elif MODE == "n_r":
+    # ---- N-R (価値ゲート toy) ----
+    import numpy as np, json, pathlib
+    from scripts.bp_extractor_min import bp_from_texts, sp_between
+    texts = ["texts/doc1.txt","texts/doc2.txt"]
+    bp_ref = bp_from_texts(texts)
+
+    results = []
+    for kappa in [0.2, 0.6]:
+        # 価値ゲート：κによってClaims数をゆるく圧縮
+        bp_mod = bp_from_texts(texts)
+        k = int(len(bp_mod["C"]) * (1 - 0.3 * kappa))
+        bp_mod["C"] = bp_mod["C"][:max(1, k)]
+
+        sp = round(sp_between(bp_ref, bp_mod), 2)
+        vs = round(1 - sp, 2)
+        results.append({"kappa": kappa, "SP": sp, "VS": vs})
+
+    OUT_N = pathlib.Path("outputs/n_r"); OUT_N.mkdir(parents=True, exist_ok=True)
+    json.dump(
+        {"meta": {"mode": "n_r"}, "results": results},
+        open(OUT_N / "metrics.json", "w", encoding="utf-8"),
+        indent=2, ensure_ascii=False
+    )
+    print("Saved: outputs/n_r/metrics.json")
+else:
+    print(f"Unknown MODE={MODE}")
