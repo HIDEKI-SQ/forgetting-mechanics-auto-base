@@ -16,3 +16,9 @@ Files:
 - `scripts/bp_extractor_min.py` : minimal BP extractor for toy
 - `requirements.txt` : numpy, matplotlib, networkx, pandas
 - `.github/workflows/auto.yml` : GitHub Actions workflow
+
+## MODE の使い分け
+- MODE=toy（既定）：CI/Actions で数十秒で回る稼働確認。BP抽出→SP/CRを近似計算。
+- MODE=bench：実験本番。Colab や実データのスクリプトに差し替えて接続する。
+使い方（Actions → Auto Measure → Run workflow）で MODE を選択。
+
