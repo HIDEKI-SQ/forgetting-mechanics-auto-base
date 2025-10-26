@@ -1,4 +1,4 @@
-![Auto Measure](https://github.com/<user>/forgetting-mechanics-auto-base/actions/workflows/auto.yml/badge.svg)
+[![Auto Measure](https://github.com/HIDEKI-SQ/forgetting-mechanics-auto-base/actions/workflows/auto.yml/badge.svg)](https://github.com/HIDEKI-SQ/forgetting-mechanics-auto-base/actions/workflows/auto.yml)
 
 # Forgetting Mechanics — Auto Base (toy ↔ bench)
 
