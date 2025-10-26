@@ -1,0 +1,46 @@
+name: Auto Measure
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      MODE:
+        description: 'toy or bench'
+        required: false
+        default: 'toy'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      MODE: ${{ github.event.inputs.MODE || 'toy' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Show MODE
+        run: echo "MODE=$MODE"
+
+      - name: Run pipeline
+        run: python run_common.py
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: auto-base-artifacts
+          path: |
+            outputs/**/*.json
+            figs/**/*.svg
+            figs/**/*.png
