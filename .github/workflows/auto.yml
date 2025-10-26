@@ -13,6 +13,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    # MODE は手動実行の入力があればそれを、なければ toy を使う
     env:
       MODE: ${{ github.event.inputs.MODE || 'toy' }}
 
@@ -36,9 +38,6 @@ jobs:
       - name: Run pipeline
         run: python run_common.py
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-with:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
