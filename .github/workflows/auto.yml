@@ -39,7 +39,10 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
 with:
-  name: auto-base-artifacts-${{ env.MODE }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: auto-base-artifacts-${{ env.MODE }}
           path: |
             outputs/**/*.json
             figs/**/*.svg
