@@ -1,0 +1,28 @@
+meta:
+  source: C2_LARICA_log_experiment
+  grain: L2
+  anchors:
+    S: causal/include
+    F: [Fi_basic, Fi_briefing]
+    T: brand_story
+
+metrics:
+  CR: 0.77
+  SP: 0.93
+  VS: 0.48
+  GEN: 0.64
+
+judgement:
+  CR_threshold: ">=0.70"
+  SP_threshold: ">=0.60"
+  VS_range: "[0.30,0.70]"
+  GEN_target: ">=0.60"
+  result: success
+
+commentary:
+  summary: >-
+    構造保存度が非常に高く、価値感度が適正帯域に収まった。R→BP→R′の循環を人手のみで再現し、
+    LARICAブランドの理念変換に対応する構造的蒸留と価値駆動再生成の証明となった。
+  interpretation: >-
+    Larimar＝核信、螺旋＝構造圧、ロゴ＝響美性（Si×Fi→Ai）の物理的象徴。
+    忘却の構造力学C2の実装例として妥当性を補強。
