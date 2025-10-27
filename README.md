@@ -24,3 +24,4 @@ Files:
 - MODE=bench：実験本番。Colab や実データのスクリプトに差し替えて接続する。
 使い方（Actions → Auto Measure → Run workflow）で MODE を選択。
 
+C2/C3 preparation in progress
