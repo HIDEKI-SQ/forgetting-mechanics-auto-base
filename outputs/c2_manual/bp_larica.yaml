@@ -1,0 +1,63 @@
+meta:
+  source: "C2_LARICA_log_experiment"
+  grain: "L2"
+  anchors:
+    S: "causal/include"
+    F: ["Fi_basic", "Fi_briefing"]
+    T: "brand_story"
+  description: "LARICA『ログにこめた想い』のBP抽出（H1〜H3構造）"
+
+blueprint:
+  A:  # 構造軸
+    abstraction_level: "medium_to_high"
+    causal_density: "moderate"
+    timescale: "past_to_present"
+  C:  # Claims（主張骨格）
+    - id: "C1"
+      claim: "Larimarという出会いが人生と創作を再生成する核信である。"
+    - id: "C2"
+      claim: "不安と反復のなかに成長が宿り、螺旋的に上昇する。"
+    - id: "C3"
+      claim: "Larimar（価値）と螺旋（構造）の統合がブランド理念を形づくる。"
+  phi:  # 整合性関数
+    - id: "φ1"
+      description: "H1→H2→H3の順序が保持され、C1〜C3の因果関係が破綻しない場合に1。"
+    - id: "φ2"
+      description: "Larimar（価値）と螺旋（構造）の対応が同一フレーム内に維持される場合に1。"
+  K:  # Constraints（制約）
+    - "テーマの不変性: Larimar／仕事観を主題に含むこと。"
+    - "構造保存: H1→H2→H3の順序を保つ。"
+    - "価値調整範囲: Fi ∈ {詩的, 実務的}（VS 0.30–0.70）"
+
+headings:  # H構造（抽出された見出し）
+  H1:
+    title: "出会いが人生を動かす"
+    bullets:
+      - "人生の転機には出会いがある。"
+      - "Larimarとの出会いが人生を変えた。"
+      - "沖縄の風景が心の回復と再出発を支える。"
+      - "Larimarは新しい一歩を踏み出す力を与える。"
+  H2:
+    title: "不安と螺旋のなかで働く"
+    bullets:
+      - "制作の日々は単調で不安が多い。"
+      - "反復の中で少しずつ成長があると信じる。"
+      - "同じ場所を回っているようでも上昇している。"
+  H3:
+    title: "Larimarと螺旋が支える軸"
+    bullets:
+      - "LarimarのLをロゴモチーフとする。"
+      - "螺旋の円は成長と姿勢を表す。"
+      - "Larimar×螺旋＝ブランドの象徴構造。"
+
+metrics_predicted:  # 予測指標（初期値）
+  CR: 0.75
+  SP: 0.85
+  VS: 0.45
+  GEN: 0.60
+
+comment:
+  summary: >-
+    LARICAの物語は、出会い（Larimar）→不安と反復→成長の螺旋→ロゴによる象徴統合
+    という流れを持ち、核信構造論における思想OSの循環構造
+    （FQ→SP→Ai）を人間的文脈で再現している。
