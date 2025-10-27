@@ -25,3 +25,4 @@ Files:
 使い方（Actions → Auto Measure → Run workflow）で MODE を選択。
 
 C2/C3 preparation in progress
+Commit directly to develop
