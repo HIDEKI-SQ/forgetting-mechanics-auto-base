@@ -1,48 +1,63 @@
 name: Auto Measure
 
 on:
-  push:
-  pull_request:
   workflow_dispatch:
     inputs:
-      MODE:
-        description: 'toy or bench'
+      mode:
+        description: "mode (e.g. toy | n_r)"
+        required: true
+        default: "n_r"
+      target_id:
+        description: "target id (e.g. lari_001) — optional"
         required: false
-        default: 'toy'
+        default: ""
+      kappa_list:
+        description: "Comma-separated kappas (e.g. 0.0,0.2,0.4,0.6,0.8,1.0) — optional; leave blank to use defaults"
+        required: false
+        default: ""
 
 jobs:
-  build:
+  run:
     runs-on: ubuntu-latest
-
-    # MODE は手動実行の入力があればそれを、なければ toy を使う
-    env:
-      MODE: ${{ github.event.inputs.MODE || 'toy' }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Show MODE
-        run: echo "MODE=$MODE"
+      - name: Run AutoMeasure
+        env:
+          MODE: ${{ github.event.inputs.mode }}
+          TARGET_ID: ${{ github.event.inputs.target_id }}
+          KAPPA_LIST: ${{ github.event.inputs.kappa_list }}
+        run: |
+          set -e
+          ARGS="--mode ${MODE}"
+          if [ -n "${TARGET_ID}" ]; then
+            ARGS="${ARGS} --target_id ${TARGET_ID}"
+          fi
+          if [ -n "${KAPPA_LIST}" ]; then
+            # pass as one quoted string so commas are preserved
+            ARGS="${ARGS} --kappa_list \"${KAPPA_LIST}\""
+          fi
+          echo ">>> python run_common.py ${ARGS}"
+          eval python run_common.py ${ARGS}
 
-      - name: Run pipeline
-        run: python run_common.py
-
-      - name: Upload artifacts
+      - name: Upload outputs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: auto-base-artifacts-${{ env.MODE }}
+          name: outputs
           path: |
-            outputs/**/*.json
-            figs/**/*.svg
-            figs/**/*.png
+            outputs/**
+            docs/figs/**
+          if-no-files-found: warn
