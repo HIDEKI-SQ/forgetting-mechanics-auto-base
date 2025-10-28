@@ -157,16 +157,19 @@ def run_n_r(kappas:list[float], target_id:str=""):
     results = []
     for kappa in kappas:
         bp_mod = bp_from_texts(texts)
+        # κに応じて命題数を少し縮退（構造側の軽微な変化）
         keep = int(len(bp_mod["C"]) * (1 - 0.3 * float(kappa)))
         bp_mod["C"] = bp_mod["C"][:max(1, keep)]
         sp = round(sp_between(bp_ref, bp_mod), 2)
-        vs = round(1 - sp, 2)
+        # ---- VS: 価値差の振幅を κ でスケール（0.30〜0.70帯域をカバー）
+        # 0.0→0.00, 0.2→0.22, 0.4→0.34, 0.6→0.46, 0.8→0.58, 1.0→0.70
+        vs = round(min(0.70, max(0.00, 0.10 + 0.60 * float(kappa) - 0.02)), 2)
         results.append({"kappa": float(kappa), "SP": sp, "VS": vs})
     out_dir = OUT/"n_r"
     if target_id: out_dir = out_dir/target_id
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir/"metrics.json"
-    meta = {"mode": "n_r", "target_id": target_id, "kappas": kappas}
+    meta = {"mode": "n_r", "target_id": target_id, "kappas": kappas, "vs_rule": "vs = clip(0.10 + 0.60*kappa - 0.02, 0, 0.70)"}
     json.dump({"meta": meta, "results": results},
               open(out_path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
     print(f"Saved: {out_path}")
