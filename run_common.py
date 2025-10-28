@@ -1,4 +1,5 @@
-import os, json, pathlib, re, itertools
+# -*- coding: utf-8 -*-
+import os, json, pathlib, re, itertools, argparse
 import numpy as np
 import networkx as nx
 
@@ -73,16 +74,30 @@ def sp_between(bp0, bp1):
     return 0.5*j_edge + 0.5*f1
 
 # -------------------------
+# Argument parsing
+# -------------------------
+def parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument("--mode", default=os.environ.get("MODE","toy"))
+    p.add_argument("--target_id", default=os.environ.get("TARGET_ID",""))
+    # 単体 κ 指定（ワークフローで for ループする方式に対応）
+    p.add_argument("--kappa", type=float, default=None)
+    # 複数 κ 指定（カンマ区切り）
+    p.add_argument("--kappa_list", default=os.environ.get("KAPPA_LIST",""))
+    return p.parse_args()
+
+# -------------------------
 # Experiment modes
 # -------------------------
-OUT = pathlib.Path("outputs"); OUT.mkdir(exist_ok=True)
+ROOT = pathlib.Path(".")
+OUT  = ROOT/"outputs"; OUT.mkdir(exist_ok=True)
 (OUT/"toy").mkdir(parents=True, exist_ok=True)
 (OUT/"bench").mkdir(parents=True, exist_ok=True)
 (OUT/"n_r").mkdir(parents=True, exist_ok=True)
-(pathlib.Path("figs")/"toy").mkdir(parents=True, exist_ok=True)
-(pathlib.Path("figs")/"bench").mkdir(parents=True, exist_ok=True)
 
-MODE = os.environ.get("MODE", "toy").lower()
+(FIGS := (ROOT/"figs")).mkdir(exist_ok=True)
+(FIGS/"toy").mkdir(parents=True, exist_ok=True)
+(FIGS/"bench").mkdir(parents=True, exist_ok=True)
 
 def magnitude_prune(W: np.ndarray, p: float) -> np.ndarray:
     flat = np.abs(W).flatten()
@@ -91,67 +106,84 @@ def magnitude_prune(W: np.ndarray, p: float) -> np.ndarray:
     M[np.abs(M) <= thr] = 0.0
     return M
 
-def run_toy():
+def run_toy(target_id:str=""):
     texts = ["texts/doc1.txt","texts/doc2.txt"]
     rng = np.random.default_rng(42)
     W0 = rng.normal(0,1,(64,64))
-
-    # 基準BP（p=0）を先に求める
+    # 基準BP（p=0）
     bp0 = bp_from_texts(texts)
-
-    # ② |R|struct を基準BPから定義（A=3要素分を加算して同一単位化）
     r_struct = len(bp0["C"]) + len(bp0["phi"]) + 3
-
     results=[]
     for p in [0.0, 0.4, 0.8]:
         Wp = magnitude_prune(W0, p)
-        # 簡易的に：剪定で命題を間引く近似
         bp = bp_from_texts(texts)
         keep = int(len(bp["C"]) * (1 - 0.9*p))
         bp["C"] = bp["C"][:max(1, keep)]
-
-        # SP（構造保存）
         sp = round(sp_between(bp0, bp), 2)
-
-        # ① CR のクリップ（0〜1の範囲に整合）
         sz = len(bp["C"]) + len(bp["phi"]) + 3
         cr = round(max(0.0, min(1.0, 1 - sz / max(1, r_struct))), 2)
-
         results.append({"p": p, "CR": cr, "SP": sp, "BP_size": len(bp["C"])})
-
-    out_path = OUT/"toy"/"metrics.json"
-    json.dump({"meta": {"mode": "toy"}, "results": results}, open(out_path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+    out_dir = OUT/"toy"
+    if target_id: out_dir = out_dir/target_id
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir/"metrics.json"
+    json.dump({"meta": {"mode": "toy", "target_id": target_id}, "results": results},
+              open(out_path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
     print(f"Saved: {out_path}")
 
-def run_bench():
-    # 将来：Colabや本計測を接続。今はプレースホルダー。
-    out_path = OUT/"bench"/"metrics.json"
-    json.dump({"meta": {"mode": "bench"}, "results": []}, open(out_path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+def run_bench(target_id:str=""):
+    out_dir = OUT/"bench"
+    if target_id: out_dir = out_dir/target_id
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir/"metrics.json"
+    json.dump({"meta": {"mode": "bench", "target_id": target_id}, "results": []},
+              open(out_path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
     print(f"Saved: {out_path}")
 
-def run_n_r():
-    # N-R: 価値ゲート κ の toy 実験
+def parse_kappas(args) -> list[float]:
+    # 優先順位：--kappa（単体） > --kappa_list（配列） > 既定
+    if args.kappa is not None:
+        return [float(args.kappa)]
+    if args.kappa_list:
+        try:
+            return [float(x) for x in re.split(r'[,\s]+', args.kappa_list.strip()) if x!='']
+        except Exception:
+            pass
+    return [0.2, 0.6]  # 既定
+
+def run_n_r(kappas:list[float], target_id:str=""):
     texts = ["texts/doc1.txt","texts/doc2.txt"]
     bp_ref = bp_from_texts(texts)
     results = []
-    for kappa in [0.2, 0.6]:
+    for kappa in kappas:
         bp_mod = bp_from_texts(texts)
-        # κに応じて少しだけ命題数を縮退（価値依存の軽微な再構成の近似）
-        keep = int(len(bp_mod["C"]) * (1 - 0.3 * kappa))
+        keep = int(len(bp_mod["C"]) * (1 - 0.3 * float(kappa)))
         bp_mod["C"] = bp_mod["C"][:max(1, keep)]
         sp = round(sp_between(bp_ref, bp_mod), 2)
         vs = round(1 - sp, 2)
-        results.append({"kappa": kappa, "SP": sp, "VS": vs})
-    out_path = OUT/"n_r"/"metrics.json"
-    json.dump({"meta": {"mode": "n_r"}, "results": results}, open(out_path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+        results.append({"kappa": float(kappa), "SP": sp, "VS": vs})
+    out_dir = OUT/"n_r"
+    if target_id: out_dir = out_dir/target_id
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir/"metrics.json"
+    meta = {"mode": "n_r", "target_id": target_id, "kappas": kappas}
+    json.dump({"meta": meta, "results": results},
+              open(out_path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
     print(f"Saved: {out_path}")
 
+# -------------------------
+# Entrypoint
+# -------------------------
 if __name__ == "__main__":
-    if MODE == "toy":
-        run_toy()
-    elif MODE == "bench":
-        run_bench()
-    elif MODE == "n_r":
-        run_n_r()
+    args = parse_args()
+    mode = (args.mode or os.environ.get("MODE","toy")).lower()
+
+    if mode == "toy":
+        run_toy(target_id=args.target_id)
+    elif mode == "bench":
+        run_bench(target_id=args.target_id)
+    elif mode == "n_r":
+        kappas = parse_kappas(args)
+        run_n_r(kappas, target_id=args.target_id)
     else:
-        print(f"Unknown MODE={MODE}")
+        print(f"Unknown MODE={mode}")
