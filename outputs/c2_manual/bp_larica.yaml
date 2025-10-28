@@ -61,3 +61,6 @@ comment:
     LARICAの物語は、出会い（Larimar）→不安と反復→成長の螺旋→ロゴによる象徴統合
     という流れを持ち、核信構造論における思想OSの循環構造
     （FQ→SP→Ai）を人間的文脈で再現している。
+value_constraints:
+  gV_range: [0.0, 1.0]
+  gV_max_safe: 1.0
