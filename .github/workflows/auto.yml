@@ -42,7 +42,24 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: auto-base-artifacts-${{ env.MODE }}
-          path: |
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'mode'
+        default: 'n_r'
+      kappa_list:
+        description: 'Comma-separated kappa list'
+        default: '0.0,0.2,0.4,0.6,0.8,1.0'
+jobs:
+  run:
+    steps:
+      - run: |
+          python run_common.py \
+            --mode "${{ github.event.inputs.mode }}" \
+            --kappa_list "${{ github.event.inputs.kappa_list }}"
+
+        path: |
             outputs/**/*.json
             figs/**/*.svg
             figs/**/*.png
