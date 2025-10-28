@@ -80,9 +80,7 @@ def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--mode", default=os.environ.get("MODE","toy"))
     p.add_argument("--target_id", default=os.environ.get("TARGET_ID",""))
-    # 単体 κ 指定（ワークフローで for ループする方式に対応）
     p.add_argument("--kappa", type=float, default=None)
-    # 複数 κ 指定（カンマ区切り）
     p.add_argument("--kappa_list", default=os.environ.get("KAPPA_LIST",""))
     return p.parse_args()
 
@@ -94,6 +92,7 @@ OUT  = ROOT/"outputs"; OUT.mkdir(exist_ok=True)
 (OUT/"toy").mkdir(parents=True, exist_ok=True)
 (OUT/"bench").mkdir(parents=True, exist_ok=True)
 (OUT/"n_r").mkdir(parents=True, exist_ok=True)
+(OUT/"stress").mkdir(parents=True, exist_ok=True)
 
 (FIGS := (ROOT/"figs")).mkdir(exist_ok=True)
 (FIGS/"toy").mkdir(parents=True, exist_ok=True)
@@ -110,7 +109,6 @@ def run_toy(target_id:str=""):
     texts = ["texts/doc1.txt","texts/doc2.txt"]
     rng = np.random.default_rng(42)
     W0 = rng.normal(0,1,(64,64))
-    # 基準BP（p=0）
     bp0 = bp_from_texts(texts)
     r_struct = len(bp0["C"]) + len(bp0["phi"]) + 3
     results=[]
@@ -141,7 +139,6 @@ def run_bench(target_id:str=""):
     print(f"Saved: {out_path}")
 
 def parse_kappas(args) -> list[float]:
-    # 優先順位：--kappa（単体） > --kappa_list（配列） > 既定
     if args.kappa is not None:
         return [float(args.kappa)]
     if args.kappa_list:
@@ -149,7 +146,7 @@ def parse_kappas(args) -> list[float]:
             return [float(x) for x in re.split(r'[,\s]+', args.kappa_list.strip()) if x!='']
         except Exception:
             pass
-    return [0.2, 0.6]  # 既定
+    return [0.2, 0.6]
 
 def run_n_r(kappas:list[float], target_id:str=""):
     texts = ["texts/doc1.txt","texts/doc2.txt"]
@@ -157,19 +154,62 @@ def run_n_r(kappas:list[float], target_id:str=""):
     results = []
     for kappa in kappas:
         bp_mod = bp_from_texts(texts)
-        # κに応じて命題数を少し縮退（構造側の軽微な変化）
         keep = int(len(bp_mod["C"]) * (1 - 0.3 * float(kappa)))
         bp_mod["C"] = bp_mod["C"][:max(1, keep)]
         sp = round(sp_between(bp_ref, bp_mod), 2)
-        # ---- VS: 価値差の振幅を κ でスケール（0.30〜0.70帯域をカバー）
-        # 0.0→0.00, 0.2→0.22, 0.4→0.34, 0.6→0.46, 0.8→0.58, 1.0→0.70
+        # VS: κ に応じて 0.30–0.70 帯域に入るようスケール
         vs = round(min(0.70, max(0.00, 0.10 + 0.60 * float(kappa) - 0.02)), 2)
         results.append({"kappa": float(kappa), "SP": sp, "VS": vs})
     out_dir = OUT/"n_r"
     if target_id: out_dir = out_dir/target_id
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir/"metrics.json"
-    meta = {"mode": "n_r", "target_id": target_id, "kappas": kappas, "vs_rule": "vs = clip(0.10 + 0.60*kappa - 0.02, 0, 0.70)"}
+    meta = {"mode": "n_r", "target_id": target_id, "kappas": kappas,
+            "vs_rule": "vs = clip(0.10 + 0.60*kappa - 0.02, 0, 0.70)"}
+    json.dump({"meta": meta, "results": results},
+              open(out_path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+    print(f"Saved: {out_path}")
+
+# --- NEW: extreme compression / structural collapse test ---
+def run_stress(target_id:str=""):
+    texts = ["texts/doc1.txt","texts/doc2.txt"]
+    bp_ref = bp_from_texts(texts)
+    n0 = max(1, len(bp_ref["C"]))
+
+    results=[]
+    # p=0.0: 基準（無圧縮）
+    p = 0.0
+    bp0 = bp_ref
+    sp0 = round(sp_between(bp_ref, bp0), 2)
+    cr0 = 0.0
+    results.append({"p": p, "CR": cr0, "SP": sp0, "BP_size": len(bp0["C"])})
+
+    # p=0.80: 強い圧縮（サブセット化）
+    p = 0.80
+    keep = max(1, int(n0*(1-p)))
+    bp80 = bp_from_texts(texts)
+    bp80["C"] = bp80["C"][:keep]
+    sp80 = round(sp_between(bp_ref, bp80), 2)
+    cr80 = round(p, 2)  # 定義：CR≈p（過圧縮比）
+    results.append({"p": p, "CR": cr80, "SP": sp80, "BP_size": len(bp80["C"])})
+
+    # p=0.95: 極端圧縮 + 構造攪乱（重なりゼロの2エッジでパスを形成）
+    p = 0.95
+    bp95 = {"A": bp_ref["A"], "C": [], "phi": []}
+    # 中間ノード M を共有してパスを成立させつつ、E0 と重ならない新規ノードを使う
+    bp95["C"] = [
+        {"form": ["X1","precedes","M"], "conf": 1.0, "id": "sx1"},
+        {"form": ["M","precedes","Y2"],  "conf": 1.0, "id": "sx2"}
+    ]
+    sp95 = round(sp_between(bp_ref, bp95), 2)   # 期待：0.00〜0.10 程度
+    cr95 = round(p, 2)                           # 期待：0.95
+    results.append({"p": p, "CR": cr95, "SP": sp95, "BP_size": len(bp95["C"])})
+
+    out_dir = OUT/"stress"
+    if target_id: out_dir = out_dir/target_id
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir/"metrics.json"
+    meta = {"mode": "stress", "target_id": target_id, "note": "extreme-compression with synthetic claims"}
     json.dump({"meta": meta, "results": results},
               open(out_path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
     print(f"Saved: {out_path}")
@@ -188,5 +228,7 @@ if __name__ == "__main__":
     elif mode == "n_r":
         kappas = parse_kappas(args)
         run_n_r(kappas, target_id=args.target_id)
+    elif mode == "stress":
+        run_stress(target_id=args.target_id)
     else:
         print(f"Unknown MODE={mode}")
