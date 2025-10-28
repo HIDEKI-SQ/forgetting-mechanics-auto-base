@@ -24,5 +24,9 @@ Files:
 - MODE=bench：実験本番。Colab や実データのスクリプトに差し替えて接続する。
 使い方（Actions → Auto Measure → Run workflow）で MODE を選択。
 
-C2/C3 preparation in progress
-Commit directly to develop
+### C3 Summary (A+D+C)
+- κスイープ：SP≥0.60 & VS∈[0.30,0.70] の最適帯域を確認。
+- 過圧縮テスト：p=0.95 で CR=0.95, SP=0.00（構造崩壊）を観測。
+- 安定性：5回再測定で std=0.00（RS/ST 基準内）。
+=> C3 Core Completed (100%)
+
