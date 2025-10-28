@@ -1,0 +1,6 @@
+blueprint:
+  A: { abstraction_level: "medium_to_high", causal_density: "moderate", timescale: "past_to_present" }
+  C:
+    - { id: "C1", form: ["Larimar","includes","ロゴ"] }
+  phi:
+    - { rule: "precedes_acyclic", value: 1 }
