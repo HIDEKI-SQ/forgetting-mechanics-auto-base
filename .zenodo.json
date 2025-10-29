@@ -1,0 +1,17 @@
+{
+  "title": "Forgetting Mechanics Auto Base",
+  "creators": [
+    { "name": "HIDEKI", "orcid": "0009-0002-0019-6608" }
+  ],
+  "description": "Reproducible experiment base for Structural Cognition (C3–C4).",
+  "access_right": "open",
+  "license": "MIT",
+  "upload_type": "software",
+  "keywords": ["structure", "cognition", "forgetting", "blueprint"],
+  "related_identifiers": [
+    {
+      "relation": "isContinuedBy",
+      "identifier": "https://doi.org/10.5281/zenodo.xxxxxx"
+    }
+  ]
+}
