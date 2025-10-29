@@ -61,3 +61,9 @@ jobs:
             outputs/**
             docs/figs/**
           if-no-files-found: warn
+
+# 既存の run step の最後に追記
+      - name: Run BP Layer
+        if: ${{ github.event.inputs.mode == 'bp_layer' }}
+        run: |
+          python scripts/run_bp_layer.py --target_id lari_001 --bp_path outputs/c2_manual/bp_larica.yaml
