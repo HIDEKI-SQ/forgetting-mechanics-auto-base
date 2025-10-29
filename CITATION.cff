@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it."
+type: software
+title: "forgetting-mechanics-auto-base: C3/C4 Structural Cognition Experiment"
+authors:
+  - name: "HIDEKI"
+    orcid: "0009-0002-0019-6608"
+repository-code: "https://github.com/HIDEKI-SQ/forgetting-mechanics-auto-base"
+license: "MIT"
+keywords: ["narrative structure", "structural cognition", "forgetting mechanics", "BP model"]
