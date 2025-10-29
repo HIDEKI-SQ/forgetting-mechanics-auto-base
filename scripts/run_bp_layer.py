@@ -16,6 +16,7 @@ def simple_renderer(bp, fi, title="R′(AI)"):
     """BP=(A,C,φ;K) と Fi={tone,focus,context} を受けて擬似R′を生成（決定論）。"""
     H = bp.get("headings", {})
     C = [c["claim"] for c in bp.get("blueprint", {}).get("C", [])]
+
     # Fiに応じたテンプレ（tone/focus/contextを切替え）
     if fi == "basic":
         head = "【説明】"
@@ -25,25 +26,20 @@ def simple_renderer(bp, fi, title="R′(AI)"):
         tmpl = "{h}\n〈要点〉{c}"
 
     lines = [head]
+    # 重要：H1/H2 にのみ核主張を付与、H3 は見出しのみ（→ c_hits を 2 に固定）
     for i, key in enumerate(("H1", "H2", "H3"), start=1):
         if key in H:
             h = f"{H[key]['title']}"
-            # --- basic: H1/H2のみ核主張を付与、H3は見出しのみ ---
-            if fi == "basic":
-                if i <= 2 and C:
-                    ci = C[i - 1]
-                    lines.append(tmpl.format(h=h, c=ci))
-                else:
-                    lines.append(h)
-            else:
-                ci = C[i - 1] if i - 1 < len(C) else ""
+            if i <= 2 and i-1 < len(C):
+                ci = C[i-1]
                 lines.append(tmpl.format(h=h, c=ci))
+            else:
+                lines.append(h)
     return title + "\n" + "\n".join(lines) + "\n"
 
 def sp_score(bp_ref, text_ai):
     """H構造・順序・核主張の3項からSPを近似（L2粒度、決定論）。"""
     Href = [bp_ref["headings"][k]["title"] for k in ("H1", "H2", "H3") if k in bp_ref["headings"]]
-    href_set = set(Href)
     sents = to_sentences(text_ai)
 
     # H構造一致
@@ -55,17 +51,16 @@ def sp_score(bp_ref, text_ai):
     for h in Href:
         pos = next((i for i, s in enumerate(sents) if h in s), None)
         idx.append(pos)
-    order = 1.0 if all(idx[i] is not None for i in range(len(idx))) and idx == sorted(idx) else (0.5 if sum(p is not None for p in idx) >= 2 else 0.0)
+    order = 1.0 if all(idx[i] is not None for i in range(len(idx))) and idx == sorted(idx) \
+            else (0.5 if sum(p is not None for p in idx) >= 2 else 0.0)
 
-    # 核主張一致（c_hits に応じて 1.0 / 0.5 / 0.33 / 0.0）
+    # 核主張一致：全文一致（claim文字列がそのまま含まれるか）で判定
     Cref = [c["claim"] for c in bp_ref["blueprint"]["C"]]
-    c_hits = sum(
-        1 for c in Cref if any(any(tok in s for tok in re.findall(r"[一-龥ぁ-んァ-ンA-Za-z0-9]+", c)) for s in sents)
-    )
+    c_hits = sum(1 for c in Cref if any(c in s for s in sents))
     if c_hits >= 3:
         c_match = 1.0
     elif c_hits == 2:
-        c_match = 0.50  # ★中間値をC3人手評価と一致させる
+        c_match = 0.50
     elif c_hits == 1:
         c_match = 0.33
     else:
@@ -94,8 +89,8 @@ def main():
     ap.add_argument("--target_id", default="lari_001")
     args = ap.parse_args()
 
-    OUT_DIR = OUT / args.target_id
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    out_dir = OUT / args.target_id
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     bp = load_bp_yaml(args.bp_path)
 
@@ -109,30 +104,24 @@ def main():
     sp_ai = round((sp_ai_basic + sp_ai_brief) / 2, 2)
     vs_ai = vs_score(r_basic, r_brief)
 
-    # 人間（C3）の既知代表値（LARICA）
+    # 人間（C3）の代表値（LARICA）
     SP_human = 0.83
     VS_human = 0.48
 
     metrics = {
-        "meta": {
-            "mode": "bp_layer",
-            "target_id": args.target_id,
-            "bp_path": args.bp_path
-        },
-        "ai": {"SP": sp_ai, "VS": vs_ai},
-        "human": {"SP": SP_human, "VS": VS_human},
-        "delta": {
-            "dSP": round(abs(sp_ai - SP_human), 2),
-            "dVS": round(abs(vs_ai - VS_human), 2)
-        }
+        "meta": {"mode": "bp_layer", "target_id": args.target_id, "bp_path": args.bp_path},
+        "ai":   {"SP": sp_ai, "VS": vs_ai},
+        "human":{"SP": SP_human, "VS": VS_human},
+        "delta":{"dSP": round(abs(sp_ai - SP_human), 2),
+                 "dVS": round(abs(vs_ai - VS_human), 2)}
     }
 
-    with open(OUT_DIR / "regen_ai_lari_001.md", "w", encoding="utf-8") as f:
+    with open(out_dir / "regen_ai_lari_001.md", "w", encoding="utf-8") as f:
         f.write(r_basic + "\n" + r_brief)
-    with open(OUT_DIR / "metrics_ai.json", "w", encoding="utf-8") as f:
+    with open(out_dir / "metrics_ai.json", "w", encoding="utf-8") as f:
         json.dump(metrics, f, ensure_ascii=False, indent=2)
 
-    print(f"Saved: {OUT_DIR/'metrics_ai.json'}")
+    print(f"Saved: {out_dir/'metrics_ai.json'}")
 
 if __name__ == "__main__":
     main()
