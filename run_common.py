@@ -4,7 +4,7 @@ import numpy as np
 import networkx as nx
 
 # -------------------------
-# Minimal BP extractor bits
+# Minimal BP extractor bits (toy/n_r用の既存機能)
 # -------------------------
 CAUSE_WORDS = ("because","therefore","so","hence","thus","ので","だから","ゆえに")
 TIME_WORDS  = ("today","now","later","before","after","昨日","今日","明日")
@@ -85,15 +85,13 @@ def parse_args():
     return p.parse_args()
 
 # -------------------------
-# Experiment modes
+# Experiment modes (toy/bench/n_r)
 # -------------------------
 ROOT = pathlib.Path(".")
 OUT  = ROOT/"outputs"; OUT.mkdir(exist_ok=True)
 (OUT/"toy").mkdir(parents=True, exist_ok=True)
 (OUT/"bench").mkdir(parents=True, exist_ok=True)
 (OUT/"n_r").mkdir(parents=True, exist_ok=True)
-(OUT/"stress").mkdir(parents=True, exist_ok=True)
-
 (FIGS := (ROOT/"figs")).mkdir(exist_ok=True)
 (FIGS/"toy").mkdir(parents=True, exist_ok=True)
 (FIGS/"bench").mkdir(parents=True, exist_ok=True)
@@ -113,7 +111,7 @@ def run_toy(target_id:str=""):
     r_struct = len(bp0["C"]) + len(bp0["phi"]) + 3
     results=[]
     for p in [0.0, 0.4, 0.8]:
-        Wp = magnitude_prune(W0, p)
+        _ = magnitude_prune(W0, p)
         bp = bp_from_texts(texts)
         keep = int(len(bp["C"]) * (1 - 0.9*p))
         bp["C"] = bp["C"][:max(1, keep)]
@@ -157,62 +155,25 @@ def run_n_r(kappas:list[float], target_id:str=""):
         keep = int(len(bp_mod["C"]) * (1 - 0.3 * float(kappa)))
         bp_mod["C"] = bp_mod["C"][:max(1, keep)]
         sp = round(sp_between(bp_ref, bp_mod), 2)
-        # VS: κ に応じて 0.30–0.70 帯域に入るようスケール
-        vs = round(min(0.70, max(0.00, 0.10 + 0.60 * float(kappa) - 0.02)), 2)
+        vs = round(1 - sp, 2)
         results.append({"kappa": float(kappa), "SP": sp, "VS": vs})
     out_dir = OUT/"n_r"
     if target_id: out_dir = out_dir/target_id
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir/"metrics.json"
-    meta = {"mode": "n_r", "target_id": target_id, "kappas": kappas,
-            "vs_rule": "vs = clip(0.10 + 0.60*kappa - 0.02, 0, 0.70)"}
+    meta = {"mode": "n_r", "target_id": target_id, "kappas": kappas}
     json.dump({"meta": meta, "results": results},
               open(out_path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
     print(f"Saved: {out_path}")
 
-# --- NEW: extreme compression / structural collapse test ---
-def run_stress(target_id:str=""):
-    texts = ["texts/doc1.txt","texts/doc2.txt"]
-    bp_ref = bp_from_texts(texts)
-    n0 = max(1, len(bp_ref["C"]))
-
-    results=[]
-    # p=0.0: 基準（無圧縮）
-    p = 0.0
-    bp0 = bp_ref
-    sp0 = round(sp_between(bp_ref, bp0), 2)
-    cr0 = 0.0
-    results.append({"p": p, "CR": cr0, "SP": sp0, "BP_size": len(bp0["C"])})
-
-    # p=0.80: 強い圧縮（サブセット化）
-    p = 0.80
-    keep = max(1, int(n0*(1-p)))
-    bp80 = bp_from_texts(texts)
-    bp80["C"] = bp80["C"][:keep]
-    sp80 = round(sp_between(bp_ref, bp80), 2)
-    cr80 = round(p, 2)  # 定義：CR≈p（過圧縮比）
-    results.append({"p": p, "CR": cr80, "SP": sp80, "BP_size": len(bp80["C"])})
-
-    # p=0.95: 極端圧縮 + 構造攪乱（重なりゼロの2エッジでパスを形成）
-    p = 0.95
-    bp95 = {"A": bp_ref["A"], "C": [], "phi": []}
-    # 中間ノード M を共有してパスを成立させつつ、E0 と重ならない新規ノードを使う
-    bp95["C"] = [
-        {"form": ["X1","precedes","M"], "conf": 1.0, "id": "sx1"},
-        {"form": ["M","precedes","Y2"],  "conf": 1.0, "id": "sx2"}
-    ]
-    sp95 = round(sp_between(bp_ref, bp95), 2)   # 期待：0.00〜0.10 程度
-    cr95 = round(p, 2)                           # 期待：0.95
-    results.append({"p": p, "CR": cr95, "SP": sp95, "BP_size": len(bp95["C"])})
-
-    out_dir = OUT/"stress"
-    if target_id: out_dir = out_dir/target_id
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir/"metrics.json"
-    meta = {"mode": "stress", "target_id": target_id, "note": "extreme-compression with synthetic claims"}
-    json.dump({"meta": meta, "results": results},
-              open(out_path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
-    print(f"Saved: {out_path}")
+# -------------------------
+# c4_impl (NEW): delegate to scripts/c4_impl.py
+# -------------------------
+def run_c4_impl(target_id:str=""):
+    from scripts.c4_impl import run as run_c4
+    case = target_id or os.environ.get("TARGET_ID","brand_larica")
+    bp_path = os.environ.get("BP_PATH","")  # 未指定なら c4_impl 側で推測
+    run_c4(case_id=case, bp_path=bp_path)
 
 # -------------------------
 # Entrypoint
@@ -228,7 +189,7 @@ if __name__ == "__main__":
     elif mode == "n_r":
         kappas = parse_kappas(args)
         run_n_r(kappas, target_id=args.target_id)
-    elif mode == "stress":
-        run_stress(target_id=args.target_id)
+    elif mode == "c4_impl":
+        run_c4_impl(target_id=args.target_id)
     else:
         print(f"Unknown MODE={mode}")
