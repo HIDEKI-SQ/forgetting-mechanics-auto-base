@@ -4,15 +4,19 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "mode (e.g. toy | n_r | stress | bench | bp_layer)"
+        description: "mode (toy | n_r | c4_impl | bench)"
         required: true
-        default: "n_r"
+        default: "c4_impl"
       target_id:
-        description: "target id (e.g. lari_001) — optional"
+        description: "target id (e.g. brand_larica)"
+        required: false
+        default: "brand_larica"
+      kappa_list:
+        description: "Comma-separated kappas (for n_r only)"
         required: false
         default: ""
-      kappa_list:
-        description: "Comma-separated kappas (e.g. 0.0,0.2,0.4,0.6,0.8,1.0) — optional; leave blank to use defaults"
+      bp_path:
+        description: "BP yaml path (optional; default: outputs/c2_manual/bp_<target_id>.yaml)"
         required: false
         default: ""
 
@@ -34,13 +38,12 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      # --- 通常モード（bp_layer 以外） ---
       - name: Run AutoMeasure
-        if: ${{ github.event.inputs.mode != 'bp_layer' }}
         env:
-          MODE: ${{ github.event.inputs.mode }}
-          TARGET_ID: ${{ github.event.inputs.target_id }}
+          MODE:       ${{ github.event.inputs.mode }}
+          TARGET_ID:  ${{ github.event.inputs.target_id }}
           KAPPA_LIST: ${{ github.event.inputs.kappa_list }}
+          BP_PATH:    ${{ github.event.inputs.bp_path }}
         run: |
           set -e
           ARGS="--mode ${MODE}"
@@ -48,21 +51,11 @@ jobs:
             ARGS="${ARGS} --target_id ${TARGET_ID}"
           fi
           if [ -n "${KAPPA_LIST}" ]; then
-            # pass as one quoted string so commas are preserved
             ARGS="${ARGS} --kappa_list \"${KAPPA_LIST}\""
           fi
           echo ">>> python run_common.py ${ARGS}"
           eval python run_common.py ${ARGS}
 
-      # --- C4: BP Layer 実験（bp_layer のときのみ実行） ---
-      - name: Run BP Layer
-        if: ${{ github.event.inputs.mode == 'bp_layer' }}
-        run: |
-          python scripts/run_bp_layer.py \
-            --target_id "${{ github.event.inputs.target_id || 'lari_001' }}" \
-            --bp_path outputs/c2_manual/bp_larica.yaml
-
-      # --- すべてのモードの出力を最後にアップロード ---
       - name: Upload outputs
         if: always()
         uses: actions/upload-artifact@v4
