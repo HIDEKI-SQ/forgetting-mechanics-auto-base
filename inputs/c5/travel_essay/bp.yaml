@@ -1,0 +1,39 @@
+meta:
+  source: "travel_essay"
+  grain: "L2"
+  description: "出張での出会いと文化体験を通じた信頼形成と価値観の記録"
+
+blueprint:
+  A:
+    abstraction_level: "mid"
+    causal_density: "moderate"
+    timescale: "short-to-medium"
+  C:
+    - id: C1
+      claim: "現地の人々との出会いが仕事の意味を再確認させてくれる"
+    - id: C2
+      claim: "顔を合わせることが信頼関係を築く上で不可欠である"
+    - id: C3
+      claim: "国や文化の違いを越えて、小さな積み重ねが大きな成果を生む"
+  phi:
+    - id: φ1
+      description: "C1–C3 の因果構造（出会い→信頼→成果）を保持する"
+  K:
+    - "信頼構築における身体的接触の重要性"
+    - "文化差を越えた協働の継続"
+headings:
+  H1:
+    title: "出発と目的"
+    bullets:
+      - "出張とPOP UP準備"
+      - "バロックパールの買い付け目的"
+  H2:
+    title: "出会いと文化"
+    bullets:
+      - "現地移動と人との関わり"
+      - "異文化体験と学び"
+  H3:
+    title: "顔が見える信頼"
+    bullets:
+      - "対面の意義と信頼"
+      - "国を越えた関係の継続"
