@@ -1,0 +1,39 @@
+meta:
+  source: "brand_larica"
+  grain: "L2"
+  description: "Larimarとの出会いから生まれたLARICA理念と創作姿勢の構造"
+
+blueprint:
+  A:
+    abstraction_level: "mid-high"
+    causal_density: "moderate"
+    timescale: "long-term"
+  C:
+    - id: C1
+      claim: "Larimarとの出会いがブランド誕生の核となり、創作の原動力を与えた"
+    - id: C2
+      claim: "不安や単調な日々の中でも、螺旋的に成長を重ねるという姿勢を持つ"
+    - id: C3
+      claim: "Larimarと螺旋の象徴が、仕事観と願いを体現するロゴデザインに結晶した"
+  phi:
+    - id: φ1
+      description: "H1→H2→H3 の順序保持と C1–C3 の因果整合"
+  K:
+    - "理念・行動・象徴の三層構造を保つこと"
+    - "主観的体験と客観的象徴を連結させる"
+headings:
+  H1:
+    title: "Larimarとの出会い"
+    bullets:
+      - "人生の転機"
+      - "沖縄の旅と癒しの風景"
+  H2:
+    title: "不安と反復の日々"
+    bullets:
+      - "単調さと不安"
+      - "反復の中での成長"
+  H3:
+    title: "ロゴに込めた願い"
+    bullets:
+      - "Larimar＝力の象徴"
+      - "螺旋円＝仕事観の表現"
