@@ -1,0 +1,39 @@
+meta:
+  source: "pearl_story"
+  grain: "L2"
+  description: "真珠に対する敬意と品質哲学、信頼構造の記録"
+
+blueprint:
+  A:
+    abstraction_level: "mid"
+    causal_density: "high"
+    timescale: "generational"
+  C:
+    - id: C1
+      claim: "真珠は素材ではなく人との信頼で育まれる存在である"
+    - id: C2
+      claim: "LARICAは独自の品質基準Sクラスを設け、業界にない規格を確立した"
+    - id: C3
+      claim: "選び抜かれたパールは人の想いを経て『ひと粒の物語』として顧客に届く"
+  phi:
+    - id: φ1
+      description: "C1→C3 への信頼と価値の連鎖が維持される"
+  K:
+    - "品質・信頼・物語の三層を保持すること"
+    - "素材と人の関係を切らないこと"
+headings:
+  H1:
+    title: "真珠へのまなざし"
+    bullets:
+      - "生産者との信頼"
+      - "素材への敬意"
+  H2:
+    title: "品質と基準"
+    bullets:
+      - "独自のSクラス設定"
+      - "品質差の課題への対応"
+  H3:
+    title: "一粒の物語"
+    bullets:
+      - "厳しい選別と検品"
+      - "多くの手と想いを経て顧客へ"
