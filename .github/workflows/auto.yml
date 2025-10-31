@@ -4,19 +4,19 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "mode (toy | n_r | c4_impl | bench)"
+        description: "mode (toy | n_r | c4_impl | bench | c5_cases)"
         required: true
-        default: "c4_impl"
+        default: "c5_cases"
       target_id:
-        description: "target id (e.g. brand_larica)"
+        description: "target id (e.g. brand_larica) — for c4_impl / n_r / bench"
         required: false
         default: "brand_larica"
       kappa_list:
-        description: "Comma-separated kappas (for n_r only)"
+        description: "Comma-separated kappas — for n_r only"
         required: false
         default: ""
       bp_path:
-        description: "BP yaml path (optional; default: outputs/c2_manual/bp_<target_id>.yaml)"
+        description: "BP yaml path (optional; default: outputs/c2_manual/bp_<target_id>.yaml) — for c4_impl / n_r / bench"
         required: false
         default: ""
 
@@ -37,8 +37,20 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # C5 で YAML を読むため
+          pip install pyyaml
 
-      - name: Run AutoMeasure
+      # --- C5: 一括ケース計測（ブラウザ入力不要／全自動） -----------------
+      - name: Run C5 (c5_cases)
+        if: ${{ github.event.inputs.mode == 'c5_cases' }}
+        run: |
+          set -e
+          echo ">>> python scripts/c5_cases.py"
+          python scripts/c5_cases.py
+
+      # --- 既存(C4/κ-sweep等) のレガシー実行系 -----------------------------
+      - name: Run legacy modes via run_common.py
+        if: ${{ github.event.inputs.mode != 'c5_cases' }}
         env:
           MODE:       ${{ github.event.inputs.mode }}
           TARGET_ID:  ${{ github.event.inputs.target_id }}
@@ -52,6 +64,9 @@ jobs:
           fi
           if [ -n "${KAPPA_LIST}" ]; then
             ARGS="${ARGS} --kappa_list \"${KAPPA_LIST}\""
+          fi
+          if [ -n "${BP_PATH}" ]; then
+            ARGS="${ARGS} --bp_path \"${BP_PATH}\""
           fi
           echo ">>> python run_common.py ${ARGS}"
           eval python run_common.py ${ARGS}
