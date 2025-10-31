@@ -1,0 +1,39 @@
+meta:
+  source: "about_us"
+  grain: "L2"
+  description: "創業者の動機とブランド哲学、ジュエリーの社会的意義"
+
+blueprint:
+  A:
+    abstraction_level: "mid"
+    causal_density: "moderate"
+    timescale: "medium-term"
+  C:
+    - id: C1
+      claim: "LARICAは個性あるバロックパールの魅力に価値を見出し、日常に寄り添う上質を目指す"
+    - id: C2
+      claim: "創業者ERICAは自己表現から出発し、ジュエリーに心を満たす力を見出した"
+    - id: C3
+      claim: "誰もが手に取れる価格と品質を両立させ、日常にときめきを届けることを使命とする"
+  phi:
+    - id: φ1
+      description: "C1–C3 が『個性→気づき→社会実装』として連続する"
+  K:
+    - "感性と倫理の両立"
+    - "自己表現を社会的価値に昇華させる"
+headings:
+  H1:
+    title: "ブランドの物語"
+    bullets:
+      - "個性あるバロックパールへの着目"
+      - "日常に寄り添うジュエリー"
+  H2:
+    title: "創業者の想い"
+    bullets:
+      - "自己表現としての創作"
+      - "心を満たす力への気づき"
+  H3:
+    title: "願いと使命"
+    bullets:
+      - "価格と品質の両立"
+      - "誰もがときめきを得られる日常"
