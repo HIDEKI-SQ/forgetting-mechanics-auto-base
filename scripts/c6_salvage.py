@@ -169,7 +169,7 @@ def run_case(case_id: str) -> Dict[str, Any]:
     SP_h, H_est = h_estimate(bp_pivot, text, thr_cov=0.70)
 
     # E3: L1救済
-    SP_l1 = sp_l1(bp_pivot, text, sim_thr=0.60)
+    SP_l1 = sp_l1(bp_pivot, text, sim_thr=0.55)
 
     # 統合スコア（簡易規定）：SP′ = max(SP_base, SP_h, SP_L1)
     SP_prime = round(max(SP_base, SP_h, SP_l1), 2)
