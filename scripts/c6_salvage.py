@@ -14,7 +14,7 @@ from typing import Dict, Any, List, Tuple
 import yaml
 
 ROOT = pathlib.Path(".").resolve()
-CASES = ["about_us", "pearl_story", "travel_essay_day1", "brand_larica"]
+CASES = ["about_us", "pearl_story", "travel_essay", "brand_larica"]
 TOK = r"[A-Za-z0-9一-龥ぁ-んァ-ンー]+"
 
 
