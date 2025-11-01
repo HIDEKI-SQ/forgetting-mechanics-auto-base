@@ -163,7 +163,7 @@ def run_case(case_id: str) -> Dict[str, Any]:
     SP_base = sp_l2(bp_pivot, text, thr_cov=0.70)
 
     # E1: coverage sweep
-    sweep = coverage_sweep(bp_pivot, text, thresholds=(0.05, 0.60, 0.65, 0.70, 0.75))
+    sweep = coverage_sweep(bp_pivot, text, thresholds=(0.55, 0.60, 0.65, 0.70, 0.75))
 
     # E2: H推定
     SP_h, H_est = h_estimate(bp_pivot, text, thr_cov=0.70)
