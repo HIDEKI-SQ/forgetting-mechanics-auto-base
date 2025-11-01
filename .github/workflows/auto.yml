@@ -1,10 +1,37 @@
-# 既存部はそのまま。mode の候補に c6_salvage を追加しておくと親切です。
-# ...
+name: Auto Measure
+
+on:
+  workflow_dispatch:
+    inputs:
       mode:
         description: "mode (toy | n_r | c4_impl | bench | c5_cases | c6_salvage)"
         required: true
         default: "c6_salvage"
-# ...
+      target_id:
+        description: "target id (for c4_impl / n_r / bench)"
+        required: false
+        default: "brand_larica"
+      kappa_list:
+        description: "Comma-separated kappas (for n_r only)"
+        required: false
+        default: ""
+      bp_path:
+        description: "BP yaml path (for c4_impl / n_r / bench)"
+        required: false
+        default: ""
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
@@ -12,7 +39,7 @@
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install pyyaml
 
-      # --- C6: salvage（非構造文救済） -------------------------------
+      # --- C6: salvage（非構造文の救済測定） -------------------------
       - name: Run C6 (c6_salvage)
         if: ${{ github.event.inputs.mode == 'c6_salvage' }}
         run: |
@@ -20,13 +47,15 @@
           echo ">>> python scripts/c6_salvage.py"
           python scripts/c6_salvage.py
 
-      # --- 既存（C5/C4等）は従来どおり -------------------------------
+      # --- C5: 複数ケース一般化（GEN） -------------------------------
       - name: Run C5 (c5_cases)
         if: ${{ github.event.inputs.mode == 'c5_cases' }}
         run: |
           set -e
+          echo ">>> python scripts/c5_cases.py"
           python scripts/c5_cases.py
 
+      # --- 従来モード（run_common.py 経由） -------------------------
       - name: Run legacy modes via run_common.py
         if: ${{ github.event.inputs.mode != 'c6_salvage' && github.event.inputs.mode != 'c5_cases' }}
         env:
@@ -48,3 +77,13 @@
           fi
           echo ">>> python run_common.py ${ARGS}"
           eval python run_common.py ${ARGS}
+
+      - name: Upload outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: outputs
+          path: |
+            outputs/**
+            docs/figs/**
+          if-no-files-found: warn
