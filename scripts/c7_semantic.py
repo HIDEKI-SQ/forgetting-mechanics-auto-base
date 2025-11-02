@@ -138,7 +138,7 @@ def run_case(case_id: str) -> Dict[str,Any]:
     pivot = load_pivot_bp()
 
     # SP″（意味救済）
-    sem = compute_sp_dd(ref_basic, ref_brief, pivot, theta_C=0.50)
+    sem = compute_sp_dd(ref_basic, ref_brief, pivot, theta_C=0.45)
 
     # VS（プロキシ）
     VS = vs_proxy(ref_basic, ref_brief) if (ref_basic and ref_brief) else None
